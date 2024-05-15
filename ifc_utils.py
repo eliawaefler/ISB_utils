@@ -1,48 +1,86 @@
+Here's the complete code with the requested modifications, including the `printout` parameter for conditional print statements:
+
+```python
 import ifcopenshell
 
+def clean_ifc(ifc_file_path, printout=False):
+    """
+    Clean an IFC file by creating a new IFC file that contains only one instance
+    of each specified element type, preserving their attributes and property sets.
 
-def clean_ifc(ifc_file_path):
-    # Open the IFC file
-    ifc_model = ifcopenshell.open(ifc_file_path)
-    
-    # Create a new empty IFC file
-    new_ifc_model = ifcopenshell.file()
-    
-    # Add the necessary header information
-    for entity in ifc_model.by_type('IfcProject'):
-        new_ifc_model.createIfcProject(entity.GlobalId, entity.OwnerHistory, entity.Name, entity.Description, entity.ObjectType, entity.LongName, entity.Phase)
+    Parameters:
+    ifc_file_path (str): Path to the input IFC file.
+    printout (bool): Whether to print out debug information.
+
+    Returns:
+    ifcopenshell.file: A new IFC model containing one instance of each specified element type.
+    """
+    try:
+        # Open the IFC file
+        ifc_model = ifcopenshell.open(ifc_file_path)
+
+        # Create a new empty IFC file
+        new_ifc_model = ifcopenshell.file()
+
+        # Add the necessary header information
+        for entity in ifc_model.by_type('IfcProject'):
+            new_ifc_model.createIfcProject(
+                entity.GlobalId, entity.OwnerHistory, entity.Name, entity.Description,
+                entity.ObjectType, entity.LongName, entity.Phase
+            )
+
+        # Define the types to keep one instance of
+        types_to_keep = [
+            'IfcWall', 'IfcDoor', 'IfcWindow', 'IfcSlab', 'IfcColumn', 'IfcBeam',
+            'IfcRoof', 'IfcStair', 'IfcRamp', 'IfcSpace', 'IfcZone', 'IfcCovering'
+        ]
+
+        # Dictionary to track added types
+        added_types = {type_name: False for type_name in types_to_keep}
+
+        for type_name in types_to_keep:
+            instances = ifc_model.by_type(type_name)
+            if instances:
+                instance = instances[0]
+                new_instance = new_ifc_model.add(instance)
+                added_types[type_name] = True
+
+                # Copy all attributes and property sets
+                for attribute in instance.__dict__:
+                    setattr(new_instance, attribute, getattr(instance, attribute))
+                for pset in ifcopenshell.util.element.get_psets(instance):
+                    ifcopenshell.util.element.add_pset(new_ifc_model, new_instance, pset)
         
-    # Define the types to keep one instance of
-    types_to_keep = [
-        'IfcWall', 'IfcDoor', 'IfcWindow', 'IfcSlab', 'IfcColumn', 'IfcBeam',
-        'IfcRoof', 'IfcStair', 'IfcRamp', 'IfcSpace', 'IfcZone', 'IfcCovering'
-    ]
-    
-    # Dictionary to track added types
-    added_types = {type_name: False for type_name in types_to_keep}
-    
-    for type_name in types_to_keep:
-        instances = ifc_model.by_type(type_name)
-        if instances:
-            instance = instances[0]
-            new_instance = new_ifc_model.add(instance)
-            added_types[type_name] = True
-            
-            # Copy all attributes and property sets
-            for attribute in instance.__dict__:
-                setattr(new_instance, attribute, getattr(instance, attribute))
-            for pset in ifcopenshell.util.element.get_psets(instance):
-                ifcopenshell.util.element.add_pset(new_ifc_model, new_instance, pset)
-    
-    return new_ifc_model
+        if printout:
+            print(f"Cleaned IFC file created with types: {list(added_types.keys())}")
+        return new_ifc_model
+
+    except FileNotFoundError:
+        print(f"File not found: {ifc_file_path}")
+        return ifcopenshell.file()
+    except Exception as e:
+        print(f"Error cleaning IFC file: {e}")
+        return ifcopenshell.file()
 
 
-def get_element_types(ifc_path):
+def get_element_types(ifc_path, printout=False):
+    """
+    Get a list of all element types present in an IFC file.
+
+    Parameters:
+    ifc_path (str): Path to the IFC file.
+    printout (bool): Whether to print out debug information.
+
+    Returns:
+    list: A list of element types.
+    """
     try:
         ifc_file = ifcopenshell.open(ifc_path)
         element_types = set()
         for entity in ifc_file:
             element_types.add(entity.is_a())
+        if printout:
+            print(f"Element types: {element_types}")
         return list(element_types)
     except FileNotFoundError:
         print(f"File not found: {ifc_path}")
@@ -52,7 +90,18 @@ def get_element_types(ifc_path):
         return []
 
 
-def get_psets_for_entity(ifc_path, entity_type):
+def get_psets_for_entity(ifc_path, entity_type, printout=False):
+    """
+    Get a list of all property sets (psets) that an entity type can have in an IFC file.
+
+    Parameters:
+    ifc_path (str): Path to the IFC file.
+    entity_type (str): IFC entity type (e.g., IfcSlab, IfcWall).
+    printout (bool): Whether to print out debug information.
+
+    Returns:
+    list: A list of property sets for the specified entity type.
+    """
     try:
         ifc_file = ifcopenshell.open(ifc_path)
         psets = set()
@@ -61,6 +110,8 @@ def get_psets_for_entity(ifc_path, entity_type):
                 for definition in entity.IsDefinedBy:
                     if definition.is_a('IfcRelDefinesByProperties'):
                         psets.add(definition.RelatingPropertyDefinition.Name)
+        if printout:
+            print(f"Psets for {entity_type}: {psets}")
         return list(psets)
     except FileNotFoundError:
         print(f"File not found: {ifc_path}")
@@ -70,12 +121,26 @@ def get_psets_for_entity(ifc_path, entity_type):
         return []
 
 
-def get_properties_in_pset(ifc_path, pset_name):
+def get_properties_in_pset(ifc_path, pset_name, printout=False):
+    """
+    Get a list of all properties in a given property set (pset) in an IFC file.
+
+    Parameters:
+    ifc_path (str): Path to the IFC file.
+    pset_name (str): Name of the property set.
+    printout (bool): Whether to print out debug information.
+
+    Returns:
+    list: A list of properties in the specified property set.
+    """
     try:
         ifc_file = ifcopenshell.open(ifc_path)
         for entity in ifc_file.by_type('IfcPropertySet'):
             if entity.Name == pset_name:
-                return [prop.Name for prop in entity.HasProperties]
+                properties = [prop.Name for prop in entity.HasProperties]
+                if printout:
+                    print(f"Properties in {pset_name}: {properties}")
+                return properties
         return []
     except FileNotFoundError:
         print(f"File not found: {ifc_path}")
@@ -85,7 +150,20 @@ def get_properties_in_pset(ifc_path, pset_name):
         return []
 
 
-def get_property_value(ifc_path, entity_type, pset_name, property_name):
+def get_property_value(ifc_path, entity_type, pset_name, property_name, printout=False):
+    """
+    Get the value of a specific property from a given entity type and property set in an IFC file.
+
+    Parameters:
+    ifc_path (str): Path to the IFC file.
+    entity_type (str): IFC entity type (e.g., IfcSlab, IfcWall).
+    pset_name (str): Name of the property set.
+    property_name (str): Name of the property.
+    printout (bool): Whether to print out debug information.
+
+    Returns:
+    Any: The value of the specified property.
+    """
     try:
         ifc_file = ifcopenshell.open(ifc_path)
         for entity in ifc_file.by_type(entity_type):
@@ -96,6 +174,8 @@ def get_property_value(ifc_path, entity_type, pset_name, property_name):
                         if pset.Name == pset_name:
                             for prop in pset.HasProperties:
                                 if prop.Name == property_name:
+                                    if printout:
+                                        print(f"Value of {property_name} in {pset_name} for {entity_type}: {prop.NominalValue}")
                                     return prop.NominalValue
         raise ValueError(f"Property '{property_name}' not found in pset '{pset_name}' for entity type '{entity_type}'")
     except FileNotFoundError:
@@ -106,40 +186,48 @@ def get_property_value(ifc_path, entity_type, pset_name, property_name):
         raise ValueError(f"Error retrieving property value: {e}")
 
 
-def compare_ifcs(ifc_path1, ifc_path2):
-    element_types = get_element_types(ifc_path1)
-    print(f"Element types: {element_types}")
+def compare_ifcs(ifc_path1, ifc_path2, printout=False):
+    """
+    Compare two IFC files and calculate a similarity score based on the presence and values of properties.
 
+    Parameters:
+    ifc_path1 (str): Path to the first IFC file.
+    ifc_path2 (str): Path to the second IFC file.
+    printout (bool): Whether to print out debug information.
+
+    Returns:
+    dict: A dictionary with requests made, matches, and similarity score.
+    """
+    element_types = get_element_types(ifc_path1, printout)
+    
     all_psets = {}
     for entity_type in element_types:
-        psets = get_psets_for_entity(ifc_path1, entity_type)
+        psets = get_psets_for_entity(ifc_path1, entity_type, printout)
         all_psets[entity_type] = psets
-        print(f"Psets for {entity_type}: {psets}")
 
     all_properties = {}
     for entity_type, psets in all_psets.items():
         for pset in psets:
-            properties = get_properties_in_pset(ifc_path1, pset)
+            properties = get_properties_in_pset(ifc_path1, pset, printout)
             all_properties[(entity_type, pset)] = properties
-            print(f"Properties in {pset} for {entity_type}: {properties}")
 
     all_values_ifc1 = []
     for (entity_type, pset), properties in all_properties.items():
         for prop in properties:
             try:
-                value = get_property_value(ifc_path1, entity_type, pset, prop)
+                value = get_property_value(ifc_path1, entity_type, pset, prop, printout)
                 all_values_ifc1.append(value)
             except ValueError as e:
-                print(e)
-    print(f"All values from IFC1: {all_values_ifc1}")
-
+                if printout:
+                    print(e)
+    
     request_count = 0
     matched_count = 0
     for (entity_type, pset), properties in all_properties.items():
         for prop in properties:
             try:
-                value_ifc1 = get_property_value(ifc_path1, entity_type, pset, prop)
-                value_ifc2 = get_property_value(ifc_path2, entity_type, pset, prop)
+                value_ifc1 = get_property_value(ifc_path1, entity_type, pset, prop, printout)
+                value_ifc2 = get_property_value(ifc_path2, entity_type, pset, prop, printout)
                 request_count += 1
                 if isinstance(value_ifc2, type(value_ifc1)):
                     matched_count += 1
@@ -147,10 +235,21 @@ def compare_ifcs(ifc_path1, ifc_path2):
                 continue
     
     similarity_score = (matched_count / request_count) * 100 if request_count > 0 else 0
-    print(f"Requests made: {request_count}")
-    print(f"Requests matched: {matched_count}")
-    print(f"Similarity score: {similarity_score:.2f}%")
+    if printout:
+        print(f"Requests made
+
+: {request_count}")
+        print(f"Requests matched: {matched_count}")
+        print(f"Similarity score: {similarity_score:.2f}%")
+
+    return {
+        "requests_made": request_count,
+        "requests_matched": matched_count,
+        "similarity_score": similarity_score
+    }
 
 
 if __name__ == "__main__":
-    compare_ifcs("path/to/your1.ifc", "path/to/your2.ifc")
+    result = compare_ifcs("path/to/your1.ifc", "path/to/your2.ifc", printout=True)
+    print(result)
+```
