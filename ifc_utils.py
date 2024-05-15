@@ -44,8 +44,11 @@ def get_element_types(ifc_path):
         for entity in ifc_file:
             element_types.add(entity.is_a())
         return list(element_types)
+    except FileNotFoundError:
+        print(f"File not found: {ifc_path}")
+        return []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error parsing IFC file: {e}")
         return []
 
 
@@ -54,12 +57,16 @@ def get_psets_for_entity(ifc_path, entity_type):
         ifc_file = ifcopenshell.open(ifc_path)
         psets = set()
         for entity in ifc_file.by_type(entity_type):
-            for definition in entity.IsDefinedBy:
-                if definition.is_a('IfcRelDefinesByProperties'):
-                    psets.add(definition.RelatingPropertyDefinition.Name)
+            if hasattr(entity, 'IsDefinedBy'):
+                for definition in entity.IsDefinedBy:
+                    if definition.is_a('IfcRelDefinesByProperties'):
+                        psets.add(definition.RelatingPropertyDefinition.Name)
         return list(psets)
+    except FileNotFoundError:
+        print(f"File not found: {ifc_path}")
+        return []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving psets for {entity_type}: {e}")
         return []
 
 
@@ -70,8 +77,11 @@ def get_properties_in_pset(ifc_path, pset_name):
             if entity.Name == pset_name:
                 return [prop.Name for prop in entity.HasProperties]
         return []
+    except FileNotFoundError:
+        print(f"File not found: {ifc_path}")
+        return []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving properties in pset {pset_name}: {e}")
         return []
 
 
@@ -79,17 +89,21 @@ def get_property_value(ifc_path, entity_type, pset_name, property_name):
     try:
         ifc_file = ifcopenshell.open(ifc_path)
         for entity in ifc_file.by_type(entity_type):
-            for definition in entity.IsDefinedBy:
-                if definition.is_a('IfcRelDefinesByProperties'):
-                    pset = definition.RelatingPropertyDefinition
-                    if pset.Name == pset_name:
-                        for prop in pset.HasProperties:
-                            if prop.Name == property_name:
-                                return prop.NominalValue
-        raise ValueError("Property not found")
+            if hasattr(entity, 'IsDefinedBy'):
+                for definition in entity.IsDefinedBy:
+                    if definition.is_a('IfcRelDefinesByProperties'):
+                        pset = definition.RelatingPropertyDefinition
+                        if pset.Name == pset_name:
+                            for prop in pset.HasProperties:
+                                if prop.Name == property_name:
+                                    return prop.NominalValue
+        raise ValueError(f"Property '{property_name}' not found in pset '{pset_name}' for entity type '{entity_type}'")
+    except FileNotFoundError:
+        print(f"File not found: {ifc_path}")
+        raise ValueError(f"File not found: {ifc_path}")
     except Exception as e:
-        print(f"Error: {e}")
-        raise ValueError("Error retrieving property value")
+        print(f"Error retrieving property value: {e}")
+        raise ValueError(f"Error retrieving property value: {e}")
 
 
 def compare_ifcs(ifc_path1, ifc_path2):
@@ -112,8 +126,11 @@ def compare_ifcs(ifc_path1, ifc_path2):
     all_values_ifc1 = []
     for (entity_type, pset), properties in all_properties.items():
         for prop in properties:
-            value = get_property_value(ifc_path1, entity_type, pset, prop)
-            all_values_ifc1.append(value)
+            try:
+                value = get_property_value(ifc_path1, entity_type, pset, prop)
+                all_values_ifc1.append(value)
+            except ValueError as e:
+                print(e)
     print(f"All values from IFC1: {all_values_ifc1}")
 
     request_count = 0
