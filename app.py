@@ -53,5 +53,3 @@ elif action == "Compare IFCs":
     else:
         st.warning("Please upload at least two IFC files to compare.")
 
-if __name__ == "__main__":
-    st.run()
