@@ -1,6 +1,3 @@
-Here's the complete code with the requested modifications, including the `printout` parameter for conditional print statements:
-
-```python
 import ifcopenshell
 
 def clean_ifc(ifc_file_path, printout=False):
@@ -252,4 +249,3 @@ def compare_ifcs(ifc_path1, ifc_path2, printout=False):
 if __name__ == "__main__":
     result = compare_ifcs("path/to/your1.ifc", "path/to/your2.ifc", printout=True)
     print(result)
-```
