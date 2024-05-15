@@ -1,5 +1,6 @@
 import ifcopenshell
 
+
 def clean_ifc(ifc_file_path):
     # Open the IFC file
     ifc_model = ifcopenshell.open(ifc_file_path)
@@ -89,6 +90,7 @@ def get_property_value(ifc_path, entity_type, pset_name, property_name):
     except Exception as e:
         print(f"Error: {e}")
         raise ValueError("Error retrieving property value")
+
 
 def compare_ifcs(ifc_path1, ifc_path2):
     element_types = get_element_types(ifc_path1)
