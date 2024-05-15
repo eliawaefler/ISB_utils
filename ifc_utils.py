@@ -233,9 +233,7 @@ def compare_ifcs(ifc_path1, ifc_path2, printout=False):
     
     similarity_score = (matched_count / request_count) * 100 if request_count > 0 else 0
     if printout:
-        print(f"Requests made
-
-: {request_count}")
+        print(f"Requests made: {request_count}")
         print(f"Requests matched: {matched_count}")
         print(f"Similarity score: {similarity_score:.2f}%")
 
