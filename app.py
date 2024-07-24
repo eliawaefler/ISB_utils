@@ -10,8 +10,8 @@ def create_filtered_report():
     # Excel-Datei laden
     df = pd.read_excel(input_file, sheet_name=sheet_name)
 
-    # Zeilen ab A3 (also ab Index 2) filtern, in denen die Spalte B den Text "Betriebsmittel" enthält
-    filtered_df = df.iloc[2:]
+    # Zeilen ab A3 (also ab Index 1) filtern, in denen die Spalte B den Text "Betriebsmittel" enthält
+    filtered_df = df.iloc[1:]
     filtered_df = filtered_df[filtered_df.iloc[:, 1].str.contains("Betriebsmittel", na=False)]
 
     # Neue Excel-Datei speichern mit den gefilterten Daten der Spalte A
