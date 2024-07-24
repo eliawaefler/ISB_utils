@@ -1,3 +1,5 @@
+"""
+
 import streamlit as st
 import ifcopenshell
 import ifc_utils
@@ -53,3 +55,4 @@ elif action == "Compare IFCs":
     else:
         st.warning("Please upload at least two IFC files to compare.")
 
+"""
