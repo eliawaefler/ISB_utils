@@ -1,4 +1,6 @@
 streamlit
 ifcopenshell
 pandas
+subprocess
+os
 openpyxl
