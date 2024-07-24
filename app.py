@@ -9,13 +9,16 @@ def create_filtered_report():
 
     # Excel-Datei laden
     df = pd.read_excel(input_file, sheet_name=sheet_name)
+    
+    # Spaltennamen anzeigen, um den genauen Namen der Spalte B zu prüfen
+    st.write("Spaltennamen der Excel-Datei:", df.columns.tolist())
 
     # Zeilen ab A3 (also ab Index 2) filtern, in denen die Spalte B den Text "Betriebsmittel" enthält
     filtered_df = df.iloc[2:]
-    filtered_df = filtered_df[filtered_df['B'].str.contains("Betriebsmittel", na=False)]
+    filtered_df = filtered_df[filtered_df.iloc[:, 1].str.contains("Betriebsmittel", na=False)]  # Annahme, dass die zweite Spalte B ist
 
     # Neue Excel-Datei speichern mit den gefilterten Daten der Spalte A
-    filtered_df[['A']].to_excel(output_file, index=False, header=False)
+    filtered_df.iloc[:, [0]].to_excel(output_file, index=False, header=False)  # Annahme, dass die erste Spalte A ist
     return output_file
 
 # Streamlit-Frontend
