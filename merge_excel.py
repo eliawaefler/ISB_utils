@@ -1,8 +1,7 @@
 import pandas as pd
 
 # Excel-Datei und Blattnamen festlegen
-input_file = "Fachdatenmodell DIB.xls"
-input_file = "\\\\filer300\\USERS3004\\I0340828\\Desktop\\bessere_reports\\Fachdatenmodell DIB.xlsx"
+input_file = "Fachdatenmodell DIB.xlsx"
 sheet_name = "Geschäftsobjekte"
 
 # Excel-Datei laden
