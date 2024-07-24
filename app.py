@@ -1,33 +1,35 @@
+import pandas as pd
 import streamlit as st
-import subprocess
-import os
 
-# Function to get all python scripts from the utils directory
-def get_scripts(repo_path='utils'):
-    scripts = [f for f in os.listdir(repo_path) if f.endswith('.py')]
-    return scripts
+# Funktion zum Erstellen des gefilterten Excel-Berichts
+def create_filtered_report():
+    input_file = "Fachdatenmodell DIB.xlsx"
+    sheet_name = "Geschäftsobjekte"
+    output_file = "ISB_report.xlsx"
 
-# Function to run the selected script
-def run_script(script, args):
-    command = f"python {os.path.join('utils', script)} {args}"
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    return result.stdout, result.stderr
+    # Excel-Datei laden
+    df = pd.read_excel(input_file, sheet_name=sheet_name)
 
-# Streamlit UI
-st.title('Utils Scripts Runner')
+    # Zeilen ab A3 (also ab Index 2) filtern, in denen die Spalte B den Text "Betriebsmittel" enthält
+    filtered_df = df.iloc[2:]
+    filtered_df = filtered_df[filtered_df['B'].str.contains("Betriebsmittel", na=False)]
 
-scripts = get_scripts()
+    # Neue Excel-Datei speichern mit den gefilterten Daten der Spalte A
+    filtered_df[['A']].to_excel(output_file, index=False, header=False)
+    return output_file
 
-selected_script = st.selectbox('Select a script to run', scripts)
-
-args = st.text_input('Enter arguments for the script (optional)')
+# Streamlit-Frontend
+st.title('Excel Report Generator')
 
 if st.button('Run'):
-    with st.spinner('Running the script...'):
-        stdout, stderr = run_script(selected_script, args)
-        if stdout:
-            st.subheader('Output:')
-            st.text(stdout)
-        if stderr:
-            st.subheader('Error:')
-            st.text(stderr)
+    report_file = create_filtered_report()
+    st.success('Report generated successfully!')
+
+    # Bereitstellung der Datei zum Download
+    with open(report_file, "rb") as file:
+        btn = st.download_button(
+            label="Download Excel report",
+            data=file,
+            file_name=report_file,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
