@@ -1,5 +1,34 @@
 import pandas as pd
 import streamlit as st
+import sys
+import os
+import pandas as pd
+import openpyxl
+import requests
+
+def download_datamodel(debug=False):
+    """
+    https://www.myserver.com/api/test/schemes/MyModel/download?format=XLSX
+    #?format=SQL&targetDatabase=SQLServer
+    Metadata Upload/Download | dataspot. Software Handbuch
+    curl -X GET -u <user>:<password> "https://www.myserver.com/api/test/schemes/MyModel/download?xsl=<report>"
+    """
+    path = "\\\\filer300\\USERS3004\\I0340828\\Desktop\\p_LAKEHUB\\prüfprozess_pyhton_lakehub"
+
+    # Replace these with your actual username and password
+    username = st.secrets("username")
+    password = st.secrets("pw")
+    url = 'https://www.insel.dataspot.com/api/test/schemes/Kataloge/download?format=XLSX'
+    url = "https://www.myserver.com/api/test/schemes/MyModel/download?format=XLSX"
+    url = "https://insel.dataspot.io/api/test/schemes/MyModel/download?format=XLSX"
+    url = "https://insel.dataspot.io/api/test/schemes/Kataloge/download?format=XLSX"
+    url = "https://www.google.ch"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        st.success("google")
+    else:
+        st.error("no internet")
 
 # Funktion zum Erstellen des gefilterten Excel-Berichts
 def create_filtered_report():
@@ -70,3 +99,5 @@ if st.button('Config'):
             file_name=report_file,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+if st.button("download datamodell"):
+    download_datamodel(debug=False)
