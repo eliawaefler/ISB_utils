@@ -16,8 +16,8 @@ def download_datamodel(debug=False):
     path = "\\\\filer300\\USERS3004\\I0340828\\Desktop\\p_LAKEHUB\\prüfprozess_pyhton_lakehub"
 
     # Replace these with your actual username and password
-    username = st.secrets("username")
-    password = st.secrets("pw")
+    username = st.secrets("USERNAME")
+    password = st.secrets("PW")
     url = 'https://www.insel.dataspot.com/api/test/schemes/Kataloge/download?format=XLSX'
     url = "https://www.myserver.com/api/test/schemes/MyModel/download?format=XLSX"
     url = "https://insel.dataspot.io/api/test/schemes/MyModel/download?format=XLSX"
